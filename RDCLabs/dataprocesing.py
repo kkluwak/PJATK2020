@@ -23,4 +23,4 @@ def cropp_c3dfile(eventsFrame, filename):
         writer.SetFilename(filename.split('.')[0] + '-K' + str(i+1) + '.c3d')
         writer.Update()
 
-a=1
+a=2
