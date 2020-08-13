@@ -1,5 +1,7 @@
 import btk
-
+from ezc3d import c3d
+import numpy as np
+import matplotlib.pyplot as plt
 
 def cropp_c3dfile(eventsFrame, filename):
     reader = btk.btkAcquisitionFileReader()
@@ -23,4 +25,49 @@ def cropp_c3dfile(eventsFrame, filename):
         writer.SetFilename(filename.split('.')[0] + '-K' + str(i+1) + '.c3d')
         writer.Update()
 
-a=2
+def read_labels(data_path,frame_rate):
+    c3d_to_compare= c3d(data_path)
+    event = c3d_to_compare['parameters']['EVENT']['LABELS']['value']
+    czas = np.around(c3d_to_compare['parameters']['EVENT']['TIMES']['value'][1]*frame_rate)
+    eventy = [event, czas]
+    
+    eventy[0].index('Foot Strike')
+    indxE = [i for i, x in enumerate(eventy[0]) if x == "Event"]
+    indxFS = [i for i, x in enumerate(eventy[0]) if x == "Foot Strike"]
+
+    CzasFS = np.zeros(len(indxFS))
+    for i in range(len(indxFS)):
+        CzasFS[i] = eventy[1][indxFS[i]]
+
+    CzasE = np.zeros(len(indxE))
+    for i in range(len(indxE)):
+        CzasE[i] = eventy[1][indxE[i]]
+    eventy[1].sort()
+
+    p = np.zeros(10)
+    k = np.zeros(10)
+    j = 0
+    for i in range(len(eventy[1])):
+        if not i >= len(eventy[1])-2:
+            pierwszy = eventy[1][i]
+            drugi = eventy[1][i+1]
+            trzeci = eventy[1][i+2]
+            if pierwszy in CzasE:
+                if drugi in CzasFS:
+                    if trzeci in CzasE:
+                        p[j] = pierwszy
+                        k[j] = trzeci
+                        j+=1
+    p = p.astype(int)
+    k = k.astype(int)
+
+    return [p,k]
+
+def rysowanie_marker(data,point,p,k):
+    for j in range(3):
+        for i in range(10):
+            plt.plot(data[j][point][p[i]:k[i]])
+        plt.show()
+    
+    
+    
