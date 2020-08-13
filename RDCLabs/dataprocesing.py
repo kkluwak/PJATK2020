@@ -69,5 +69,5 @@ def rysowanie_marker(data,point,p,k):
             plt.plot(data[j][point][p[i]:k[i]])
         plt.show()
     
-    
+a=1
     
