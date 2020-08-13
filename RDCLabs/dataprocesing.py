@@ -3,12 +3,18 @@ from ezc3d import c3d
 import numpy as np
 import matplotlib.pyplot as plt
 
-def cropp_c3dfile(eventsFrame, filename):
+def cropp_c3dfile(eventsFrame, filename, destiny):
+    """
+    Funkcja oddzielajaca pojedyncze ruchy w odrebne pliki na podstawie danych o markerach
+    
+    Przy wyowolaniu nalezy podac poczatek i koniec wycinka w formacie [[a,b],[a,b],...],
+    sciezke pliku, ktory zostanie pociety oraz sciezke, do ktorej zostana zapisane wyodrebnione czesci
+    """
     reader = btk.btkAcquisitionFileReader()
     reader.SetFilename(filename)
     reader.Update()
     acq = reader.GetOutput()
-    
+ 
     writer = btk.btkAcquisitionFileWriter()
     
     for i in range(0, len(eventsFrame)):
@@ -16,17 +22,24 @@ def cropp_c3dfile(eventsFrame, filename):
         clone.ResizeFrameNumberFromEnd(acq.GetLastFrame() - eventsFrame[i][0] + 1)
         clone.ResizeFrameNumber(eventsFrame[i][1] - eventsFrame[i][0] + 1)
         clone.SetFirstFrame(eventsFrame[i][0])
-            
         clone.ClearEvents()
         for e in btk.Iterate(acq.GetEvents()):
             if ((e.GetFrame() > clone.GetFirstFrame()) and (e.GetFrame() < clone.GetLastFrame())):
                   clone.AppendEvent(e)
         clone.SetFirstFrame(1)
         writer.SetInput(clone)
-        writer.SetFilename(filename.split('.')[0] + '-K' + str(i+1) + '.c3d')
+        writer.SetFilename(destiny + '\\' + (filename.split('\\')[-1]).split('.')[0]+ '-K' + str(i+1) + '.c3d')
         writer.Update()
 
-def read_labels(data_path,frame_rate):
+        
+def read_labels(data_path,frame_rate):  
+    """
+    Funkcja zwraca tablice [p, d], w której są zapisane czasy eventow oznaczających
+    przyjecie postawy poczatkowej.
+   
+    Wywolanie funkcji wymaga podania dwoch parametrow, pierwszy - sciezka do pliku c3d, drugi - frame rate
+    """
+    
     c3d_to_compare= c3d(data_path)
     event = c3d_to_compare['parameters']['EVENT']['LABELS']['value']
     czas = np.around(c3d_to_compare['parameters']['EVENT']['TIMES']['value'][1]*frame_rate)
@@ -57,12 +70,18 @@ def read_labels(data_path,frame_rate):
                     if trzeci in CzasE:
                         p.append(int(pierwszy))
                         k.append(int(trzeci))
-
     return [p,k]
 
 def rysowanie_marker(data,point,p,k):
+    """
+    Funkcja wyrysowujaca przebieg markerow dla 3 osi.
+    
+    Na wejscie nalezy podac odczytane dane o markerach, numer markera, poczatek i koniec (frame)
+    """
     for j in range(3):
         for i in range(10):
             plt.plot(data[j][point][p[i]:k[i]])
         plt.show()
+    
+    
     
