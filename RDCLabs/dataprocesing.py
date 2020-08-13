@@ -21,6 +21,7 @@ def cropp_c3dfile(eventsFrame, filename):
         for e in btk.Iterate(acq.GetEvents()):
             if ((e.GetFrame() > clone.GetFirstFrame()) and (e.GetFrame() < clone.GetLastFrame())):
                   clone.AppendEvent(e)
+        clone.SetFirstFrame(1)
         writer.SetInput(clone)
         writer.SetFilename(filename.split('.')[0] + '-K' + str(i+1) + '.c3d')
         writer.Update()
@@ -44,9 +45,8 @@ def read_labels(data_path,frame_rate):
         CzasE[i] = eventy[1][indxE[i]]
     eventy[1].sort()
 
-    p = np.zeros(10)
-    k = np.zeros(10)
-    j = 0
+    p = []
+    k = []
     for i in range(len(eventy[1])):
         if not i >= len(eventy[1])-2:
             pierwszy = eventy[1][i]
@@ -55,11 +55,8 @@ def read_labels(data_path,frame_rate):
             if pierwszy in CzasE:
                 if drugi in CzasFS:
                     if trzeci in CzasE:
-                        p[j] = pierwszy
-                        k[j] = trzeci
-                        j+=1
-    p = p.astype(int)
-    k = k.astype(int)
+                        p.append(int(pierwszy))
+                        k.append(int(trzeci))
 
     return [p,k]
 
