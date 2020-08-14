@@ -72,12 +72,68 @@ def read_labels(data_path,frame_rate):
                         k.append(int(trzeci))
     return [p,k]
 
-def wykresy_markerow(path):
+#Funkcja do obliczania nowego punktu startowego (s) i końcowego (k). Podaje się na wejściu numer markera według którego to liczymy (sugerowana prawa dłoń lub prawa stopa)
+#ev to początek i koniec ruchu na podstawie eventów (to co zwraca funkcja read_labels), markers to współrzędne markerów (Markers.from_c3d(data_path, prefix_delimiter=":"))
+def nowy_czas(numer_markera,ev,markers):
+    s=np.zeros(len(ev[0]))
+    k=np.zeros(len(ev[0]))
+#liczymy rozniczkę dla każdego uderzenia (od eventu postawy początkowej do eventu postawy początkowej
+    for i in range(len(ev[0])):
+        output_difference=np.diff(markers[1][numer_markera][ev[0][i]:ev[1][i]])
+        #plt.plot(output_difference)
+
+        #ustalenie nowego startu i końca ruchu
+        dz=max(output_difference)*0.2
+        dx=min(output_difference)*0.9
+        s[i]=np.argmax(output_difference>dz)-40
+        k[i]=len(output_difference) - np.argmax(output_difference[::-1]>dx)+40
+
+
+        #warunki, które mają zabezpieczać przed wyjściem za zakres pociętego nagrania
+        if s[i]<0:
+            s[i]=0
+        if k[i]>ev[1][i]:
+            k[i]=ev[1][i]
+        #print('s',s[i],'k',k[i])
+        # 
+    return [s,k]
+
+#Funkcja do przesuwania przyciętych wykresów tak, żeby można je było na siebie nałożyć
+def przesuwanie_wykresow(ev,os,numer_markera,s,k,markers):
+    
+    #robimy z k i s inty, bo były z tym problemy
+    #tworzymy nową tablicę zawierającą czasy startu i końca ruchu
+    evi=np.zeros((len(ev),len(ev[0])))
+    for i in range(len(ev[0])):
+        k.astype(int)
+        s.astype(int)
+        evi[1][i]=ev[0][i]+k[i]
+        evi[0][i]=ev[0][i]+s[i]
+    
+    #dla 3 osi robimy pętlę z robieniem wykresu
+    for j in range(3):
+        #dla ilości powtórzeń (zwykle 10) robimy pętlę żeby wyrzucało je na tym samym wykresie
+        for i in range(len(evi[0])):
+            #print('start',s[i],'koniec',k[i])
+
+            #normalizacja
+            markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])]=(markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])]-min(markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])]))/(max(markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])])-min(markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])]))
+
+            #operacja żeby rozciągnąć wykresy na tym samym okresie czasu (0-100)
+            t_konc=100
+            dl_ciagu=int(evi[1][i])-int(evi[0][i])
+            x=np.linspace(0,t_konc, dl_ciagu)
+            #plotowanie wykresu, w danej osi (ponieważ jest w pętli to zrobi się dla 3), dla danego numeru markera, od klatki startowej do końcowej
+            plt.plot(x, markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])])
+        plt.show()
+        
+
+def wykresy_markerow(path,markers):
     c = c3d(path)
     n_markers = ["LSHO","LELB","LWRA","RSHO","RELB","RWRA","RASI","RKNE","RANK"] # list waznych markerow
     axes = ["x","y","z"]
     body = path.split('-')[3]+":"
-    p,k = dp.read_labels(path,200)
+    p,k = read_labels(path,200)
     for mark in markers:
         n = c['parameters']['POINT']['LABELS']['value'][0:44].index(body+mark) 
         for i in range(3):
@@ -85,40 +141,3 @@ def wykresy_markerow(path):
                 plt.plot(c['data']['points'][i][n][p[j]:k[j]])
             plt.title(axes[i])
             plt.show()
-            
-def nowy_czas(numer_markera,ev,markers):
-    s=np.zeros(len(ev[0]))
-    k=np.zeros(len(ev[0]))
-
-    for i in range(len(ev[0])):
-        output_difference=np.diff(markers[1][numer_markera][ev[0][i]:ev[1][i]])
-        plt.plot(output_difference)
-
-        dz=max(output_difference)*0.2
-        s[i]=np.argmax(output_difference>dz)-40
-        k[i]=len(output_difference) - np.argmax(output_difference[::-1]>dz)+40
-
-        if s[i]<0:
-            s[i]=0
-        if k[i]>ev[1][i]:
-            k[i]=ev[1][i]
-        print('s',s[i],'k',k[i])
-    return [s,k]
-
-def przesuwanie_wykresow(ev,os,numer_markera,s,k,markers):
-    
-    evi=np.zeros((len(ev),len(ev[0])))
-    for i in range(len(ev[0])):
-        k.astype(int)
-        s.astype(int)
-        evi[1][i]=ev[0][i]+k[i]
-        evi[0][i]=ev[0][i]+s[i]
-
-    for i in range(len(evi[0])):
-        print('start',s[i],'koniec',k[i])
-        markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]=(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]-min(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]))/(max(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])])-min(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]))
-
-        t_konc=100
-        dl_ciagu=int(evi[1][i])-int(evi[0][i])
-        x=np.linspace(0,t_konc, dl_ciagu)
-        plt.plot(x, markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])])
