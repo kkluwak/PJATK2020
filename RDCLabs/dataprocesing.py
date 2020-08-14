@@ -72,16 +72,17 @@ def read_labels(data_path,frame_rate):
                         k.append(int(trzeci))
     return [p,k]
 
-def rysowanie_marker(data,point,p,k):
-    """
-    Funkcja wyrysowujaca przebieg markerow dla 3 osi.
-    
-    Na wejscie nalezy podac odczytane dane o markerach, numer markera, poczatek i koniec (frame)
-    """
-    for j in range(3):
-        for i in range(10):
-            plt.plot(data[j][point][p[i]:k[i]])
-        plt.show()
-    
-    
-    
+def wykresy_markerow(path):
+    c = c3d(path)
+    n_markers = ["LSHO","LELB","LWRA","RSHO","RELB","RWRA","RASI","RKNE","RANK"] # list waznych markerow
+    axes = ["x","y","z"]
+    body = path.split('-')[3]+":"
+    p,k = dp.read_labels(path,200)
+    for mark in markers:
+        n = c['parameters']['POINT']['LABELS']['value'][0:44].index(body+mark) 
+        for i in range(3):
+            for j in range(len(p)):
+                plt.plot(c['data']['points'][i][n][p[j]:k[j]])
+            plt.title(axes[i])
+            plt.show()
+            
