@@ -86,3 +86,39 @@ def wykresy_markerow(path):
             plt.title(axes[i])
             plt.show()
             
+def nowy_czas(numer_markera,ev,markers):
+    s=np.zeros(len(ev[0]))
+    k=np.zeros(len(ev[0]))
+
+    for i in range(len(ev[0])):
+        output_difference=np.diff(markers[1][numer_markera][ev[0][i]:ev[1][i]])
+        plt.plot(output_difference)
+
+        dz=max(output_difference)*0.2
+        s[i]=np.argmax(output_difference>dz)-40
+        k[i]=len(output_difference) - np.argmax(output_difference[::-1]>dz)+40
+
+        if s[i]<0:
+            s[i]=0
+        if k[i]>ev[1][i]:
+            k[i]=ev[1][i]
+        print('s',s[i],'k',k[i])
+    return [s,k]
+
+def przesuwanie_wykresow(ev,os,numer_markera,s,k,markers):
+    
+    evi=np.zeros((len(ev),len(ev[0])))
+    for i in range(len(ev[0])):
+        k.astype(int)
+        s.astype(int)
+        evi[1][i]=ev[0][i]+k[i]
+        evi[0][i]=ev[0][i]+s[i]
+
+    for i in range(len(evi[0])):
+        print('start',s[i],'koniec',k[i])
+        markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]=(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]-min(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]))/(max(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])])-min(markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])]))
+
+        t_konc=100
+        dl_ciagu=int(evi[1][i])-int(evi[0][i])
+        x=np.linspace(0,t_konc, dl_ciagu)
+        plt.plot(x, markers[os][numer_markera][int(evi[0][i]):int(evi[1][i])])
