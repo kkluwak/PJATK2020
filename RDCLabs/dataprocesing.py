@@ -191,25 +191,25 @@ def przesuwanie_wykresow(ev,numer_markera,s,k,markers):
             plt.plot(x, markers[j][numer_markera][int(evi[0][i]):int(evi[1][i])])
         plt.show()
         
-def wykresy_markerow(path,markers):
+def wykresy_markerow(path,markers = ["LSHO","LELB","LWRA","RSHO","RELB","RWRA","RASI","RKNE","RANK"]):
 	"""
     Funkcja do wyświetlania wykresów markerów. 
 	
 	Input:
 	- path - ściezka do pliku c3d
-	- markers - współrzędne markerów (Markers.from_c3d(path, prefix_delimiter=":"))
+	- markers - lista markerow do wyswietlenia
 	
 	Output:
 	- Wykresy położenia markerów
 	
 	"""
 	c = c3d(path)
-	n_markers = ["LSHO","LELB","LWRA","RSHO","RELB","RWRA","RASI","RKNE","RANK"] # lista waznych markerow
+	# markers = ["LSHO","LELB","LWRA","RSHO","RELB","RWRA","RASI","RKNE","RANK"] # lista waznych markerow
 	axes = ["x","y","z"]
 	body = path.split('-')[3]+":"
 	p,k = read_labels(path,200)
 	for mark in markers:
-		n = c['parameters']['POINT']['LABELS']['value'][0:44].index(body+mark) 
+		n = c['parameters']['POINT']['LABELS']['value'].index(body+mark) 
 		for i in range(3):
 			for j in range(len(p)):
 				plt.plot(c['data']['points'][i][n][p[j]:k[j]])
@@ -332,7 +332,7 @@ def compare_events_average(folder_path, person, exer_num):
     - data_path - ścieżka do pliku c3d z danymi EMG
    
     Output:
-    - Wykresy nałożonych na siebie ruchów z przesunięciem w fazie oraz pełnego przegiegu pracy mięsnia dla całego nagrania
+    - Wykresy nałożonych na siebie ruchów z przesunięciem w fazie oraz pełnego przebiegu pracy mięśnia dla całego nagrania
 
     """
     
