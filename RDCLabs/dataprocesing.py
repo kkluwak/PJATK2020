@@ -5,8 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import importlib
 from ezc3d import c3d
-from pyomeca import Analogs
-from pyomeca import Markers
+from pyomeca import Markers, Analogs
 
 from matplotlib.pyplot import subplot
 
@@ -140,7 +139,7 @@ def nowy_czas_analog(p,d,analogs):
 	for i in range(len(ev[0])):
 		output_difference=np.diff(analogs[ev[0][i]:ev[1][i]])
         #ustalenie nowego startu i końca ruchu
-		dz=max(output_difference)*0.2
+		dz=max(output_difference)*0.3
 		dx=min(output_difference)*0.9
         
 		s[i]=np.argmax(output_difference>dz)
@@ -285,7 +284,7 @@ def emg_full_preproces(datapath):
     Funkcja wczytująca dane EMG z pliku c3d oraz wstępnie je przetwarzająca.
     
     Input:
-    - datapath - ścieżka dostępu do fpliku c3d
+    - datapath - ścieżka dostępu do pliku c3d
     
     Output:
     - normalised_emg - znormalizowane dane EMG
@@ -327,16 +326,14 @@ def show_events(data_path):
 
 def compare_events_average(folder_path, person, exer_num):
     """
-    Funkcja wyświetlająca uśrednioną prace mięsni dla danego ćwiczenia i aktora.
+    Funkcja wyświetla wykresy: po lewej ruchy nałozone na siebie w czasie z przesunięciem w fazie, po prawej odczyt pełnej scieżki napieć mięsni w czasie.
     
     Input:
-    - folder_path - ścieżka dostępu do folderu z wszystkimi nagraniami
-    - person - nazwa aktora do wczytania
-    - exer_num - numer ćwiczenia do wczytania
-    
+    - data_path - ścieżka do pliku c3d z danymi EMG
+   
     Output:
-    - Wykresy średnich przebiegów dla danego ćwiczenia
-    
+    - Wykresy nałożonych na siebie ruchów z przesunięciem w fazie oraz pełnego przegiegu pracy mięsnia dla całego nagrania
+
     """
     
     muscles_names2 = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
@@ -402,7 +399,7 @@ def compare_events_average_shifted(folder_path, person, exer_num):
     
     """
 	
-    muscles_names2 = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
+    muscles_names = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
     cons1="\*\*-E0"
     cons2="-*.c3d"
     path=folder_path+person+cons1+exer_num+cons2
@@ -449,5 +446,46 @@ def compare_events_average_shifted(folder_path, person, exer_num):
                     hspace=0.35)
         aver_arr_all[num]=aver_arr_all[num]/5
         plt.plot(time,aver_arr_all[num])     
-        plt.title(muscles_names2[num])
+        plt.title(muscles_names[num])
         plt.show()
+
+def show_events_norm_shifted(data_path):
+	"""
+    Funkcja wyświetlająca prace mięsni dla danego świczenia i aktora z przesunięciem ruchów w fazie.
+    
+    Input:
+    - data_path - ścieżka dostępu do pliku c3d
+    
+    Output:
+    - Wykresy przebiegów dla danego ćwiczenia z przesunięciem ruchów w fazie
+    
+    """
+	emg_processed = emg_full_preproces(data_path)
+        
+	muscles_names = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
+ 
+	p,d=read_labels(data_path, 1000)
+	for num in range(16):
+		s,k=nowy_czas_analog(p,d,emg_processed[num])
+		subplot(1, 2, 1)
+		plt.subplots_adjust(left=0.125,
+					bottom=0.1, 
+                    right=2.8, 
+                    top=0.9, 
+                    wspace=0.25, 
+                    hspace=0.35)
+        
+		for i in range(len(p)):                          
+			emg_processed_event=emg_processed[num][(p[i]+s[i].astype(int)):(d[i]+k[i].astype(int))]
+			emg_processed_event2 = (
+			emg_processed_event.meca.normalize(scale=1)                
+			)
+			time_normalized=emg_processed_event2.meca.time_normalize(n_frames=2000)
+			time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
+			plt.plot(time_normalized)     
+			plt.title(muscles_names[num])
+
+		subplot(1, 2, 2)
+		plt.plot(emg_processed[num])
+		plt.title(muscles_names[num])
+		plt.show()
