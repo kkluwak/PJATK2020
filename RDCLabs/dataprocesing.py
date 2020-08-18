@@ -386,7 +386,7 @@ def compare_events_average(folder_path, person, exer_num):
         plt.plot(time,aver_arr_all[num])     
         plt.title(muscles_names2[num])
         plt.show()
-    print(aver_arr_all)	
+    #print(aver_arr_all)	
 
 def compare_events_average_shifted(folder_path, person, exer_num):
     """
