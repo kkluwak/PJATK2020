@@ -327,7 +327,7 @@ def show_events(data_path):
 
 def compare_events_average(folder_path, person, exer_num):
     """
-    Funkcja wyświetlająca uśrednioną prace mięsni dla danego świczenia i aktora.
+    Funkcja wyświetlająca uśrednioną prace mięsni dla danego ćwiczenia i aktora.
     
     Input:
     - folder_path - ścieżka dostępu do folderu z wszystkimi nagraniami
