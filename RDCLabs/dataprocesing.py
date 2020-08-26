@@ -460,32 +460,89 @@ def show_events_norm_shifted(data_path):
     - Wykresy przebiegów dla danego ćwiczenia z przesunięciem ruchów w fazie
     
     """
+	
 	emg_processed = emg_full_preproces(data_path)
-        
+
 	muscles_names = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
- 
+
 	p,d=read_labels(data_path, 1000)
+	max_frame, frame_size=find_max_frame(p,d,emg_processed[9][p[0]:d[0]])
 	for num in range(16):
-		s,k=nowy_czas_analog(p,d,emg_processed[num])
+		
 		subplot(1, 2, 1)
 		plt.subplots_adjust(left=0.125,
 					bottom=0.1, 
-                    right=2.8, 
-                    top=0.9, 
-                    wspace=0.25, 
-                    hspace=0.35)
-        
-		for i in range(len(p)):                          
-			emg_processed_event=emg_processed[num][(p[i]+s[i].astype(int)):(d[i]+k[i].astype(int))]
+					right=2.8, 
+					top=0.9, 
+					wspace=0.25, 
+					hspace=0.35)
+
+		for i in range(len(p)): 
+					   
+			
+			s,k=find_new_start(p[i],d[i],emg_processed[num],max_frame,frame_size,i+1)
+			
+			
+			emg_processed_event=emg_processed[num][(p[i]+s):(d[i]+k)]
 			emg_processed_event2 = (
 			emg_processed_event.meca.normalize(scale=1)                
 			)
 			time_normalized=emg_processed_event2.meca.time_normalize(n_frames=2000)
+	#             if i==9:
+	#                 time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=(int)(1000*(len(emg_processed[9][p[9]:d[9]])/k)))
+	#             else:
+	#                 time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
+				
 			time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
-			plt.plot(time_normalized)     
+				
+			plt.plot(time_normalized, label=i+1)     
 			plt.title(muscles_names[num])
+			plt.legend(loc='upper left')
 
 		subplot(1, 2, 2)
 		plt.plot(emg_processed[num])
 		plt.title(muscles_names[num])
 		plt.show()
+		
+		
+		
+def find_max_frame(p,d,analogs):
+	val_arr=[]
+	for frame in range(len(analogs)):
+		val_arr.append(analogs[frame].values)
+	max_val=max(val_arr)
+	frame_size=len(analogs)
+
+	return [val_arr.index(max_val),frame_size]
+	
+	
+def find_new_start(p,d,analogs,max_frame,frame_size,event_num):
+
+	val_arr=[]
+	analogs=analogs[p:d]
+	analogs=analogs.meca.time_normalize(n_frames=frame_size)
+	
+	for frame in range(len(analogs)):
+		val_arr.append(analogs[frame].values)
+	max_val=max(val_arr)
+	this_max_frame=val_arr.index(max_val)
+     
+	s=p+(this_max_frame-p-max_frame)
+	k=d+(this_max_frame-p-max_frame) 
+
+	return [s,k]
+	
+def find_new_start_base(p,d,analogs,max_frame,frame_size,event_num):
+
+	val_arr=[]
+	analogs=analogs[p:d]
+	
+	for frame in range(len(analogs)):
+		val_arr.append(analogs[frame].values)
+	max_val=max(val_arr)
+	this_max_frame=val_arr.index(max_val)
+     
+	s=p+(this_max_frame-p-max_frame)
+	k=d+(this_max_frame-p-max_frame) 
+
+	return [s,k]
