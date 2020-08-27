@@ -420,33 +420,30 @@ def compare_events_average_shifted(folder_path, person, exer_num):
 	file_num=0
 	
 	for file in glob.glob(path,recursive = True):
-		print(file)
-		emg_processed=emg_full_preproces(file)
-		
-			
-		
+		if file.find("fail") == -1 and file.find("Cal") == -1:
+			print(file)
+			emg_processed=emg_full_preproces(file)
 
-		p,d=read_labels(file, 1000)
-		if (file_num==0):
-			max_frame, frame_size=find_max_frame(p,d,emg_processed[9][p[0]:d[0]])
-		ev=[p,d]
-		for num in range(16):
-			
-		  
-			for i in range(len(p)):     
-				s,k=find_new_start(p[i],d[i],emg_processed[num],max_frame,frame_size,i+1)
-				emg_processed_event=emg_processed[num][(p[i]+s):(d[i]+k)]
-				emg_processed_event2 = (
-				emg_processed_event.meca.normalize(scale=1)                
-		 )                                           
-				time_normalized=emg_processed_event2.meca.time_normalize(n_frames=2000)
-				time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
-				#time_normalized=emg_processed_event2.meca.time_normalize(n_frames=1000)
-				
-				for t in range(1000):
-					aver_arr[file_num][num][t]=aver_arr[file_num][num][t]+time_normalized.values[t]
-		file_num=file_num+1
-		
+			p,d=read_labels(file, 1000)
+			if (file_num==0):
+				max_frame, frame_size=find_max_frame(p,d,emg_processed[9][p[0]:d[0]])
+			ev=[p,d]
+			for num in range(16):
+
+
+				for i in range(len(p)):     
+					s,k=find_new_start(p[i],d[i],emg_processed[num],max_frame,frame_size,i+1)
+					emg_processed_event=emg_processed[num][(p[i]+s):(d[i]+k)]
+					emg_processed_event2 = (
+					emg_processed_event.meca.normalize(scale=1)                
+			)                                           
+					time_normalized=emg_processed_event2.meca.time_normalize(n_frames=2000)
+					time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
+                    #time_normalized=emg_processed_event2.meca.time_normalize(n_frames=1000)
+
+					for t in range(1000):
+						aver_arr[file_num][num][t]=aver_arr[file_num][num][t]+time_normalized.values[t]
+			file_num=file_num+1
 	aver_arr_all=np.zeros((16,1000))    
 	for plik in range(file_num): 
 		for num in range(16):
@@ -471,7 +468,7 @@ def compare_events_average_shifted(folder_path, person, exer_num):
 		plt.title(muscles_names[num])
 		plt.legend(loc='upper left')
 		plt.show()
-		
+	return aver_arr_all
 		
 		
 def events_average_shifted(path):
@@ -636,3 +633,168 @@ def find_new_start_base(p,d,analogs,max_frame,frame_size,event_num):
 	k=d+(this_max_frame-p-max_frame) 
 
 	return [s,k]
+
+
+
+
+def average_shifted_filled(folder_path, person, exer_num):
+	"""
+	Funkcja wyświetlająca uśrednioną prace mięsni dla danego świczenia i aktora z przesunięciem ruchów w fazie.
+	
+	Input:
+	- folder_path - ścieżka dostępu do folderu z wszystkimi nagraniami
+	- person - Nazwa aktora do wczytania
+	- exer_num - Nazwa ćwiczenia do wczytania
+	
+	Output:
+	- Wykresy średnich przebiegów dla danego ćwiczenia z przesunięciem ruchów w fazie
+	
+	"""
+	
+	muscles_names = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
+	cons1="\*\*-E0"
+	cons2="-*.c3d"
+	path=folder_path+person+cons1+exer_num+cons2
+	 
+	aver_arr=np.zeros((6,16,1000))     
+	time=np.linspace(1,1000,1000)
+	file_num=0
+	
+	for file in glob.glob(path,recursive = True):
+		print(file)
+		emg_processed=emg_full_preproces(file)
+		
+			
+		
+
+		p,d=read_labels(file, 1000)
+		if (file_num==0):
+			max_frame, frame_size=find_max_frame(p,d,emg_processed[9][p[0]:d[0]])
+		ev=[p,d]
+		for num in range(16):
+			
+		  
+			for i in range(len(p)):     
+				s,k=find_new_start(p[i],d[i],emg_processed[num],max_frame,frame_size,i+1)
+				emg_processed_event=emg_processed[num][(p[i]+s):(d[i]+k)]
+				emg_processed_event2 = (
+				emg_processed_event.meca.normalize(scale=1)                
+		 )                                           
+				time_normalized=emg_processed_event2.meca.time_normalize(n_frames=2000)
+				time_normalized=time_normalized[:1000].meca.time_normalize(n_frames=1000)
+				#time_normalized=emg_processed_event2.meca.time_normalize(n_frames=1000)
+				
+				for t in range(1000):
+					aver_arr[file_num][num][t]=aver_arr[file_num][num][t]+time_normalized.values[t]
+		file_num=file_num+1
+		
+	aver_arr_all=np.zeros((16,1000))    
+	for plik in range(file_num): 
+		for num in range(16):
+			for t in range(1000):
+				aver_arr_all[num][t]= aver_arr_all[num][t]+aver_arr[plik][num][t]
+	
+	for num in range(16):
+			for t in range(1000):
+				aver_arr_all[num][t]= aver_arr_all[num][t]/(10*(file_num+1))
+	subplot(1, 1, 1)
+	plt.subplots_adjust(left=0.125,
+                    bottom=0.1, 
+                    right=5, 
+                    top=0.25, 
+                    wspace=0.25, 
+                    hspace=0.35)
+	#std_div=aver_arr_all[num].std()
+	#aver_arr_all[num]=aver_arr_all[num]/5
+	#plt.axhline(std_div,color="gray",label='Standard deviation')
+	plt.plot(time,aver_arr_all[num])
+	plt.fill_between(time,aver_arr_all[num])
+	plt.title(muscles_names[num])
+	#plt.legend(loc='upper left')
+	plt.show()
+        
+        
+def print_onset_offset(aver_arr_all,freq=1000, fun="mean", mult=1 ,above=None ,below=None ):  
+    if above is None:
+        above=freq/2
+    if below is None:
+        below=freq/2
+    
+    muscles_names = ["Czworoboczny grzbietu L","Trójgłowy ramienia L", "Dwugłowy ramienia L", "Prostownik nadgarstka L","Skośny brzucha L", "Pośladkowy średni L","Czworogłowy uda L", "Brzuchaty łydki L","Czworoboczny grzbietu P","Trójgłowy ramienia P", "Dwugłowy ramienia P", "Prostownik nadgarstka P","Skośny brzucha P", "Pośladkowy średni P","Czworogłowy uda P", "Brzuchaty łydki P"]
+    time=np.linspace(1,1000,1000)
+    freq=1000
+    for num in range(16):
+        
+        
+        #onsets=detect_onset_new(aver_arr_all[num],threshold= aver_arr_all[num].mean(), n_above=freq / 4,n_below=freq / 4 )
+        #print(onsets)
+        if fun == "mean":
+            onsets=detect_onset_new(aver_arr_all[num],threshold= aver_arr_all[num].mean()*mult, n_above=above,n_below=below )
+        if fun == "std":
+            onsets=detect_onset_new(aver_arr_all[num],threshold= aver_arr_all[num].std()*mult, n_above=above,n_below=below )
+
+        
+#         onsets =  aver_arr_all[num].meca.detect_onset(
+#         threshold= aver_arr_all[num].mean(),   # mean of the signal 
+            
+#         #threshold2= emg[i].std(),
+            
+#         n_above=freq / 4,                     # we want at least 1/2 second above the threshold
+#         n_below=freq / 4,                     # we accept point below threshold for 1/2 second
+#         ) 
+        subplot(1, 1, 1)
+        for (start, end) in onsets:   
+            plt.axvspan(start, end, color="b")           
+         
+        
+        plt.subplots_adjust(left=0.125,
+                    bottom=0.1, 
+                    right=5, 
+                    top=0.25, 
+                    wspace=0.25, 
+                    hspace=0.35)
+        aver_arr_all[num]=aver_arr_all[num]/5
+        plt.plot(time,aver_arr_all[num], color="r")     
+        plt.title(muscles_names[num]+" dla osoby B0446")
+        plt.xlabel("Time [ms]")
+        plt.ylabel("Signal [mV]")
+        plt.show()
+        
+        
+def detect_onset_new( x, threshold, n_above: int = 1, n_below: int = 0, threshold2: int = None, n_above2: int = 1):
+    if x.ndim != 1:
+        raise ValueError(
+            f"detect_onset works only for one-dimensional vector. You have {x.ndim} dimensions."
+        )
+    if isinstance(threshold, xr.DataArray):
+        threshold = threshold.item()
+    if isinstance(threshold2, xr.DataArray):
+        threshold2 = threshold2.item()
+
+    x = np.atleast_1d(x.copy())
+    x[np.isnan(x)] = -np.inf
+    inds = np.nonzero(x >= threshold)[0]
+    if inds.size:
+        # initial and final indexes of almost continuous data
+        inds = np.vstack(
+            (
+                inds[np.diff(np.hstack((-np.inf, inds))) > n_below + 1],
+                inds[np.diff(np.hstack((inds, np.inf))) > n_below + 1],
+            )
+        ).T
+        # indexes of almost continuous data longer than or equal to n_above
+        inds = inds[inds[:, 1] - inds[:, 0] >= n_above - 1, :]
+        # minimum amplitude of n_above2 values in x to detect
+        if threshold2 is not None and inds.size:
+            idel = np.ones(inds.shape[0], dtype=bool)
+            for i in range(inds.shape[0]):
+                if (
+                    np.count_nonzero(x[inds[i, 0] : inds[i, 1] + 1] >= threshold2)
+                    < n_above2
+                ):
+                    idel[i] = False
+            inds = inds[idel, :]
+    if not inds.size:
+        inds = np.array([])
+    return inds
+        
